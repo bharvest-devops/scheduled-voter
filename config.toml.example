@@ -1,0 +1,15 @@
+[general]
+rpc = "http://localhost:26657"
+grpc = "localhost:9090"
+grpc_secure_connection = false
+
+[tg]
+enable = true
+token = ""
+chat_id = ""
+
+[vote]
+vote_script_path = ""
+chain = ""
+option = ""
+duration = 5
