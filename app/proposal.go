@@ -11,10 +11,11 @@ import (
 	"bharvest.io/scheduled-voter/utils"
 )
 
-func (app *BaseApp) SubProposal(ctx context.Context) error {
+func (app *BaseApp) SubProposal(ctx context.Context) {
 	rpcClient, err := rpc.New(app.cfg.General.RPC)
 	if err != nil {
-		return err
+		app.chErr <- err
+		return
 	}
 
 	rpcClient.Connect(ctx)
@@ -22,7 +23,8 @@ func (app *BaseApp) SubProposal(ctx context.Context) error {
 
 	chEvent, err := rpcClient.Subscribe(ctx, "tm.event = 'Tx' AND message.action = '/cosmos.gov.v1beta1.MsgSubmitProposal'")
 	if err != nil {
-		return err
+		app.chErr <- err
+		return
 	}
 	utils.Info("Subscribed to new proposal event")
 	for e := range chEvent {
@@ -36,7 +38,7 @@ func (app *BaseApp) SubProposal(ctx context.Context) error {
 		utils.SendTg(msg)
 	}
 
-	return nil
+	return
 }
 
 func (app *BaseApp) ProcVote(ctx context.Context, propId string) error {

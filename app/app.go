@@ -10,8 +10,9 @@ import (
 
 func NewBaseApp(cfg *Config) *BaseApp {
 	return &BaseApp{
-		cfg: cfg,
+		cfg:           cfg,
 		chSubProposal: make(chan string, 10),
+		chErr:         make(chan error),
 	}
 }
 
@@ -24,14 +25,16 @@ func (app *BaseApp) Run(ctx context.Context) {
 	go app.SubProposal(appCtx)
 	for {
 		select {
-		case propId := <- app.chSubProposal:
+		case propId := <-app.chSubProposal:
 			// ProcVote will be thread safe
 			// because of sequence of vote tx
 			app.ProcVote(appCtx, propId)
-		case <- time.After(time.Duration(app.cfg.Vote.Duration) * time.Minute):
+		case <-time.After(time.Duration(app.cfg.Vote.Duration) * time.Minute):
 			utils.Info("Program ended")
 			return
+		case err := <-app.chErr:
+			utils.Error(err)
+			return
 		}
-		
 	}
 }

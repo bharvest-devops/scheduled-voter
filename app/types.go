@@ -22,4 +22,5 @@ type Config struct {
 type BaseApp struct {
 	cfg *Config
 	chSubProposal chan string
+	chErr chan error
 }
