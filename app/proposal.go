@@ -9,6 +9,7 @@ import (
 	"bharvest.io/scheduled-voter/client/rpc"
 	"bharvest.io/scheduled-voter/script"
 	"bharvest.io/scheduled-voter/utils"
+	"github.com/cometbft/cometbft/types"
 )
 
 func (app *BaseApp) SubProposal(ctx context.Context) {
@@ -20,6 +21,19 @@ func (app *BaseApp) SubProposal(ctx context.Context) {
 
 	rpcClient.Connect(ctx)
 	defer rpcClient.Terminate(ctx)
+
+	// For keep connect webscoket.
+	// Webscoket connection will disconnected if no data is sent for an extended period of time.
+	go func() {
+		chNewBlock, err := rpcClient.Subscribe(ctx, "tm.event = 'NewBlockHeader'")
+		if err != nil {
+			panic(err)
+		}
+		for newBlock := range chNewBlock {
+			height := newBlock.Data.(types.EventDataNewBlockHeader).Header.Height
+			utils.Info(fmt.Sprintf("New block height: %d", height))
+		}
+	}()
 
 	chEvent, err := rpcClient.Subscribe(ctx, "tm.event = 'Tx' AND message.action = '/cosmos.gov.v1beta1.MsgSubmitProposal'")
 	if err != nil {
